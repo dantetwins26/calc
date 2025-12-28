@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026 加班補休助手</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --bg-color: #F2F2F7;
+            --card-bg: #FFFFFF;
+            --text-main: #1C1C1E;
+            --text-sub: #8E8E93;
+            --accent-red: #FF3B30;
+            --accent-green: #34C759;
+            --highlight-bg: #FFF9E6;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            margin: 0; padding: 15px;
+            display: flex; justify-content: center;
+        }
+
+        .app-container { width: 100%; max-width: 480px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h2 { margin-top: 0; font-size: 20px; text-align: center; color: var(--primary-color); }
+
+        .input-group { margin-bottom: 15px; }
+        
+        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #3A3A3C; }
+
+        select, input {
+            width: 100%;
+            height: 48px;
+            border: 1px solid #D1D1D6;
+            border-radius: 10px;
+            padding: 0 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #FFF;
+        }
+
+        /* 特別強化超勤時數的輸入框 */
+        #overtime_pay { border: 2px solid #FFCC00; background-color: var(--highlight-bg); }
+
+        .readonly-field { background-color: #F2F2F7; font-weight: bold; border: none; color: #1C1C1E; }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        button {
+            width: 100%;
+            height: 52px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 10px;
+        }
+
+        button:active { opacity: 0.7; }
+
+        .result-box {
+            display: none;
+            background: #EBF5FF;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #BEE3F8;
+        }
+
+        .result-title { font-size: 13px; color: var(--text-sub); margin-bottom: 10px; }
+        .result-main { font-size: 32px; font-weight: 800; color: var(--accent-red); text-align: center; margin: 10px 0; }
+        .result-detail { font-size: 14px; display: flex; justify-content: space-between; margin-bottom: 5px; }
+
+        .copy-btn { background-color: var(--accent-green); height: 40px; font-size: 14px; margin-top: 15px; }
+
+        .footer-note { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 20px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="card">
+        <h2>🕒 2026 加班補休助手</h2>
+        
+        <div class="input-group">
+            <label>1. 選擇月份</label>
+            <select id="monthSelect" onchange="initWorkDays()">
+                <option value="1,20">1月 (基準 20天 - 扣1/19)</option>
+                <option value="2,14">2月 (基準 14天)</option>
+                <option value="3,22">3月 (基準 22天)</option>
+                <option value="4,19">4月 (基準 19天)</option>
+                <option value="5,21">5月 (基準 21天)</option>
+                <option value="6,19">6月 (基準 19天)</option>
+                <option value="7,23">7月 (基準 23天)</option>
+                <option value="8,21">8月 (基準 21天)</option>
+                <option value="9,20">9月 (基準 20天)</option>
+                <option value="10,21">10月 (基準 21天)</option>
+                <option value="11,21">11月 (基準 21天)</option>
+                <option value="12,23">12月 (基準 23天)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>2. 所屬班別</label>
+            <select id="groupSelect" onchange="initWorkDays()">
+                <option value="A">甲班 (12/28有上班)</option>
+                <option value="B">乙班 (12/28休息)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>3. 已領超勤時數 (HR)</label>
+            <input type="number" id="overtime_pay" value="0" placeholder="請輸入本月報領時數">
+        </div>
+        
+        <div id="shiftInfo" style="font-size: 13px; color: var(--primary-color); margin-top: 5px; font-weight: bold;"></div>
+    </div>
+
+    <div class="card">
+        <label style="color:var(--text-sub); margin-bottom:15px; display:block;">4. 填寫變動假別 (系統將自動計算正常工時)</label>
+        <div class="row">
+            <div class="input-group">
+                <label>補休(12hr)</label>
+                <input type="number" id="c_day" value="0" oninput="syncDays()">
+            </div>
+            <div class="input-group">
+                <label>請休(8hr)</label>
+                <input type="number" id="l_day" value="0" oninput="syncDays()">
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-group">
+                <label>外宿(12hr)</label>
+                <input type="number" id="s_day" value="0" oninput="syncDays()">
+            </div>
+            <div class="input-group">
+                <label>加休(0hr)</label>
+                <input type="number" id="a_day" value="0" oninput="syncDays()">
+            </div>
+        </div>
+        
+        <div class="input-group" style="margin-top:10px;">
+            <label>自動計算：正常上班 (20hr) 天數</label>
+            <input type="number" id="n_day" class="readonly-field" readonly>
+        </div>
+
+        <button onclick="calculateFinal()">開始結算補休</button>
+
+        <div id="resultArea" class="result-box">
+            <div class="result-title">結算報告</div>
+            <div class="result-detail"><span>公務基準門檻</span><span id="res_std"></span></div>
+            <div class="result-detail"><span>個人實上總時數</span><span id="res_my"></span></div>
+            <div class="result-detail"><span>加班總時數</span><span id="res_ot"></span></div>
+            <div class="result-detail"><span>- 扣除報領超勤</span><span id="res_pay"></span></div>
+            <hr style="border: 0; border-top: 1px dashed #BEE3F8; margin: 10px 0;">
+            <div style="text-align:center; font-size: 14px; font-weight: bold; color: #333;">剩餘可補休時數</div>
+            <div class="result-main"><span id="res_rest"></span> HR</div>
+            <button class="copy-btn" onclick="copyResult()">複製結算文字傳送 LINE</button>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        ※ 1月基準已手動扣除 1/19<br>
+        ※ 超勤時數欄位已黃底標示，方便區分
+    </div>
+</div>
+
+<script>
+const baseDate = new Date(2025, 11, 28); 
+let totalShiftDays = 0; 
+
+function initWorkDays() {
+    let rawData = document.getElementById('monthSelect').value.split(',');
+    let year = 2026;
+    let month = parseInt(rawData[0]) - 1;
+    let group = document.getElementById('groupSelect').value;
+    
+    let workDaysCount = 0;
+    let daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        let current = new Date(year, month, d);
+        let diffTime = current.getTime() - baseDate.getTime();
+        let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        if (group === 'A') { if (diffDays % 2 === 0) workDaysCount++; }
+        else { if (Math.abs(diffDays % 2) === 1) workDaysCount++; }
+    }
+    
+    totalShiftDays = workDaysCount;
+    document.getElementById('shiftInfo').innerText = "📅 系統偵測該月排班：" + totalShiftDays + " 天";
+    syncDays();
+}
+
+function syncDays() {
+    let c = parseInt(document.getElementById('c_day').value) || 0;
+    let l = parseInt(document.getElementById('l_day').value) || 0;
+    let s = parseInt(document.getElementById('s_day').value) || 0;
+    let a = parseInt(document.getElementById('a_day').value) || 0;
+    let remaining = totalShiftDays - (c + l + s + a);
+    document.getElementById('n_day').value = (remaining < 0) ? 0 : remaining;
+}
+
+function calculateFinal() {
+    let rawData = document.getElementById('monthSelect').value.split(',');
+    let stdHours = parseInt(rawData[1]) * 8;
+    let n = parseInt(document.getElementById('n_day').value) || 0;
+    let c = parseInt(document.getElementById('c_day').value) || 0;
+    let l = parseInt(document.getElementById('l_day').value) || 0;
+    let s = parseInt(document.getElementById('s_day').value) || 0;
+    let pay = parseInt(document.getElementById('overtime_pay').value) || 0;
+
+    let myTotal = (n * 20) + (c * 12) + (l * 8) + (s * 12);
+    let ot = myTotal - stdHours;
+    let rest = ot - pay;
+    
+    document.getElementById('res_std').innerText = stdHours + " hr";
+    document.getElementById('res_my').innerText = myTotal + " hr";
+    document.getElementById('res_ot').innerText = ot + " hr";
+    document.getElementById('res_pay').innerText = pay + " hr";
+    document.getElementById('res_rest').innerText = rest;
+    document.getElementById('resultArea').style.display = 'block';
+    
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function copyResult() {
+    let monthName = document.getElementById('monthSelect').options[document.getElementById('monthSelect').selectedIndex].text;
+    let rest = document.getElementById('res_rest').innerText;
+    let text = `【2026 加班結算報告】\n月份：${monthName}\n加班總時數：${document.getElementById('res_ot').innerText}\n已扣報領：${document.getElementById('res_pay').innerText}\n剩餘補休：${rest} 小時`;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => alert('已複製結算內容！'));
+    } else {
+        alert(text);
+    }
+}
+
+window.onload = initWorkDays;
+</script>
+
+</body>
+</html>
