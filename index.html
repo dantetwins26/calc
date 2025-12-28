@@ -51,7 +51,6 @@
             background-color: #FFF;
         }
 
-        /* 特別強化超勤時數的輸入框 */
         #overtime_pay { border: 2px solid #FFCC00; background-color: var(--highlight-bg); }
 
         .readonly-field { background-color: #F2F2F7; font-weight: bold; border: none; color: #1C1C1E; }
@@ -101,7 +100,7 @@
         <div class="input-group">
             <label>1. 選擇月份</label>
             <select id="monthSelect" onchange="initWorkDays()">
-                <option value="1,20">1月 (基準 20天 - 扣1/19)</option>
+                <option value="1,20">1月 (基準 20天)</option>
                 <option value="2,14">2月 (基準 14天)</option>
                 <option value="3,22">3月 (基準 22天)</option>
                 <option value="4,19">4月 (基準 19天)</option>
@@ -119,8 +118,8 @@
         <div class="input-group">
             <label>2. 所屬班別</label>
             <select id="groupSelect" onchange="initWorkDays()">
-                <option value="A">甲班 </option>
-                <option value="B">乙班 </option>
+                <option value="A">甲班</option>
+                <option value="B">乙班</option>
             </select>
         </div>
 
@@ -133,7 +132,7 @@
     </div>
 
     <div class="card">
-        <label style="color:var(--text-sub); margin-bottom:15px; display:block;">4. 填寫變動假別 (系統將自動計算正常工時)</label>
+        <label style="color:var(--text-sub); margin-bottom:15px; display:block;">4. 填寫變動假別</label>
         <div class="row">
             <div class="input-group">
                 <label>補休(12hr)</label>
@@ -177,7 +176,7 @@
 
     <div class="footer-note">
         ※ 1月基準已手動扣除 1/19<br>
-        ※ 超勤時數欄位已黃底標示，方便區分
+        ※ 正常上班天數 = 該月預計排班天數 - 變動假別天數
     </div>
 </div>
 
@@ -203,7 +202,7 @@ function initWorkDays() {
     }
     
     totalShiftDays = workDaysCount;
-    document.getElementById('shiftInfo').innerText = "📅 系統偵測該月排班：" + totalShiftDays + " 天";
+    document.getElementById('shiftInfo').innerText = "📅 該月預計總排班：" + totalShiftDays + " 天";
     syncDays();
 }
 
@@ -255,5 +254,4 @@ window.onload = initWorkDays;
 </script>
 
 </body>
-
 </html>
